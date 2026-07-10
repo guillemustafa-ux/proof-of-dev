@@ -45,17 +45,24 @@ contract ProofOfDevTest is Test {
         assertEq(vc, 3);
     }
 
+    // NOTA en todos los tests: la firma se precomputa en una variable ANTES del
+    // prank/expectRevert. `_sign` hace una staticcall a `pod.mintDigest`, y si se
+    // inlinea como argumento, ESA llamada consume el cheatcode en vez del `mint`.
+
     function test_TokenURI() public {
+        bytes memory sig = _sign(attesterPk, user, 74, 5, 3);
         vm.prank(user);
-        uint256 tokenId = pod.mint(74, 5, 3, _sign(attesterPk, user, 74, 5, 3));
+        uint256 tokenId = pod.mint(74, 5, 3, sig);
         assertEq(pod.tokenURI(tokenId), "https://api.stablenaira.test/token/1");
     }
 
     function test_RevertWhen_MintTwice() public {
+        bytes memory sig1 = _sign(attesterPk, user, 74, 5, 3);
+        bytes memory sig2 = _sign(attesterPk, user, 10, 1, 0);
         vm.startPrank(user);
-        pod.mint(74, 5, 3, _sign(attesterPk, user, 74, 5, 3));
+        pod.mint(74, 5, 3, sig1);
         vm.expectRevert(abi.encodeWithSelector(ProofOfDev.AlreadyMinted.selector, user));
-        pod.mint(10, 1, 0, _sign(attesterPk, user, 10, 1, 0));
+        pod.mint(10, 1, 0, sig2);
         vm.stopPrank();
     }
 
@@ -75,8 +82,9 @@ contract ProofOfDevTest is Test {
     }
 
     function test_RevertWhen_Transfer() public {
+        bytes memory sig = _sign(attesterPk, user, 74, 5, 3);
         vm.prank(user);
-        uint256 tokenId = pod.mint(74, 5, 3, _sign(attesterPk, user, 74, 5, 3));
+        uint256 tokenId = pod.mint(74, 5, 3, sig);
 
         vm.prank(user);
         vm.expectRevert(ProofOfDev.Soulbound.selector);
@@ -89,8 +97,9 @@ contract ProofOfDevTest is Test {
     }
 
     function test_SetBaseURI_OnlyOwner() public {
+        bytes memory sig = _sign(attesterPk, user, 74, 5, 3);
         vm.prank(user);
-        uint256 tokenId = pod.mint(74, 5, 3, _sign(attesterPk, user, 74, 5, 3));
+        uint256 tokenId = pod.mint(74, 5, 3, sig);
 
         pod.setBaseURI("ipfs://newbase/");
         assertEq(pod.tokenURI(tokenId), "ipfs://newbase/1");
@@ -107,13 +116,15 @@ contract ProofOfDevTest is Test {
         assertEq(pod.attester(), newAttester);
 
         // Old attester no longer valid.
+        bytes memory oldSig = _sign(attesterPk, user, 50, 5, 0);
         vm.prank(user);
         vm.expectRevert(ProofOfDev.InvalidAttestation.selector);
-        pod.mint(50, 5, 0, _sign(attesterPk, user, 50, 5, 0));
+        pod.mint(50, 5, 0, oldSig);
 
         // New attester works.
+        bytes memory newSig = _sign(newPk, user, 50, 5, 0);
         vm.prank(user);
-        pod.mint(50, 5, 0, _sign(newPk, user, 50, 5, 0));
+        pod.mint(50, 5, 0, newSig);
         assertEq(pod.balanceOf(user), 1);
     }
 }

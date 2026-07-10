@@ -53,13 +53,24 @@ These are scoped, not hard — happy to complete them on engagement.
 
 ---
 
+## Live on Sepolia
+
+Deployed, verified and exercised for real on 2026-07-10:
+
+| What | Evidence |
+|---|---|
+| `ProofOfDev` (soulbound ERC-721) | [`0x1Aa022E917d4Fb9BD6d5816671e99A47D2E16F38` — verified](https://sepolia.etherscan.io/address/0x1Aa022E917d4Fb9BD6d5816671e99A47D2E16F38#code) |
+| Real attested mint — the spec's worked example (score **74**, 5 contracts, 3 verified) signed EIP-712 by the attester and minted as token #1 | [tx `0x8c3d8bcd…1047e9`](https://sepolia.etherscan.io/tx/0x8c3d8bcdd7aac58287bc76a359d54dfc933b716e645f50aff2bdf6ae521047e9) |
+
+Tests: 9 Foundry (contract) + 6 node (deterministic scorer, reproduces the 74 → "Prolific" example).
+
 ## Run it
 
 ### Smart contract (Foundry)
 
 ```bash
 cd contracts
-forge install OpenZeppelin/openzeppelin-contracts foundry-rs/forge-std
+forge install OpenZeppelin/openzeppelin-contracts@v5.0.2 foundry-rs/forge-std
 forge test -vvv
 ```
 
